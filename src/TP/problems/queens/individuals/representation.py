@@ -1,36 +1,14 @@
 import random
-from abc import ABC, abstractmethod
-from ast import Tuple
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import field_validator
 
-from TP.queen_problem.evolutionary.fitness import (
-    QueensBoardFitness,
-)
-from TP.queen_problem.evolutionary.variation.mutation import (
-    MutOperator,
-    QueenSwapMutation,
-)
+from TP.core.individuals.representation import Individual
+from TP.problems.queens.fitness import QueensBoardFitness
+from TP.problems.queens.variation.mutation import QueenSwapMutation
 
 
-class Individual(BaseModel, ABC):
-    chrm: List
-    fitness_calculator: QueensBoardFitness
-    mutation_operator: MutOperator
-    p_m: float = Field(default=0.1, ge=0.0, le=1.0)
-    _fitness: Optional[float] = None
-
-    @abstractmethod
-    def mutate(self):
-        pass
-
-    @property
-    def fitness(self):
-        pass
-
-
-class PermIndividual(Individual):
+class QueensIndividual(Individual):
     chrm: List[int]
     fitness_calculator: QueensBoardFitness
     mutation_operator: QueenSwapMutation

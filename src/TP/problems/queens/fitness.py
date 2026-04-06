@@ -1,10 +1,4 @@
-from abc import ABC, abstractmethod
-
-
-class FitnessCalculator(ABC):
-    @abstractmethod
-    def calc_fitness():
-        pass
+from TP.core.fitness import FitnessCalculator
 
 
 class QueensBoardFitness(FitnessCalculator):

@@ -3,21 +3,17 @@ from typing import List, Optional
 
 from pydantic.dataclasses import dataclass
 
-from TP.queen_problem.evolutionary.individuals.factory import (
-    IndividualFactory,
-)
-from TP.queen_problem.evolutionary.individuals.representation import Individual
-from TP.queen_problem.evolutionary.selection.parents.operators import (
-    ParentSelector,
-)
-from TP.queen_problem.evolutionary.selection.survivors.operators import (
-    SurvivorSelector,
-)
-from TP.queen_problem.evolutionary.variation.recombination import (
-    RecombOperator,
-)
+from TP.core.individuals.factory import IndividualFactory
+from TP.core.individuals.representation import Individual
+from TP.core.selection.parents.operators import ParentSelector
+from TP.core.selection.survivors.operators import SurvivorSelector
+from TP.core.variation.recombination import RecombOperator
 
 
+# Em teoria parent_selector, recombinator, survivor_selector
+# estão atrelados a população, mas não precisam persistir...
+# Eles podem ser criados quando utilizados. Guardar pode
+# gerar erros por propriedades salvas em iterações anteriores
 @dataclass
 class Population(ABC):
     ind_list: List[Individual]
@@ -30,7 +26,7 @@ class Population(ABC):
         return iter(self.ind_list)
 
     @property
-    def pop_size(self):
+    def size(self):
         return len(self.ind_list)
 
     def get_individuals_fitness(self):
@@ -41,7 +37,10 @@ class Population(ABC):
         pass
 
     @abstractmethod
-    def select_next_generation(self):
+    def select_next_generation(
+        mutated_offsprings: List[Individual],
+        n_survivors: Optional[int],
+    ):
         pass
 
 
@@ -63,7 +62,7 @@ class QueensPopulation(Population):
             children = self.recombinator.recombine(parents_list)
 
             for child in children:
-                offspings_list.append(self.indiv_factory(child))
+                offspings_list.append(self.indiv_factory.create(child))
 
         return offspings_list
 
@@ -73,7 +72,7 @@ class QueensPopulation(Population):
         n_survivors: Optional[int],
     ):
         if n_survivors is None:
-            n_survivors = self.pop_size
+            n_survivors = self.size
         next_gen = self.survivor_selector.select_survivors(
             self.ind_list,
             offspings_list,

@@ -1,16 +1,8 @@
 import random
-from abc import ABC, abstractmethod
-from ast import Tuple
-from dataclasses import dataclass
 from itertools import combinations
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
-
-@dataclass
-class MutOperator(ABC):
-    @abstractmethod
-    def execute():
-        pass
+from TP.core.variation.mutation import MutOperator
 
 
 class QueenSwapMutation(MutOperator):

@@ -4,7 +4,7 @@ from typing import List
 
 from pydantic import Field
 
-from TP.queen_problem.evolutionary.individuals.representation import Individual
+from TP.core.individuals.representation import Individual
 
 
 class SurvivorSelector(ABC):

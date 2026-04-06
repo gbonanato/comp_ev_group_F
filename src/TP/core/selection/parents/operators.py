@@ -20,41 +20,39 @@ from typing import List, Optional
 import numpy as np
 from pydantic.dataclasses import dataclass
 
-from TP.queen_problem.evolutionary.individuals.population import Population
+from TP.core.individuals.population import Population
+from TP.core.individuals.representation import Individual
 
 
 class ParentSelector(ABC):
     @abstractmethod
     def select_parents(
         self,
-        pop: Population,
         num_parents: int,
+        pop: Population | List[Individual],
     ) -> List[int]:
         pass
 
 
 @dataclass
 class RouletteStrategy(ParentSelector):
-    pop: Population
-    _selection_prob: Optional[List[float]] = None
-
-    @property
-    def selection_prob(self):
-        if self._selection_prob is None:
-            self._selection_prob = self._selection_prob(self.pop)
-        return self._selection_prob
-
     def calc_selection_prob(pop: Population) -> List[float]:
         indiv_fitness = [ind.get_fitness() for ind in pop.ind_list]
         indiv_fitness = np.array(indiv_fitness)
         total_fitness = sum(indiv_fitness)
-        return indiv_fitness / total_fitness
+        if total_fitness == 0:
+            return [1 / len(indiv_fitness)] * len(indiv_fitness)
+
+        return [f / total_fitness for f in indiv_fitness]
 
     def select_parents(
         self,
         num_parents: int,
+        pop: Optional[Population],
     ) -> List[int]:
-        fitness_list = self.selection_prob
+        if pop._select_prob_cache is None:
+            pop._select_prob_cache = self.calc_selection_prob(pop)
+        fitness_list = pop._select_prob_cache
         parents = random.choices(
             range(len(fitness_list)),
             weights=fitness_list,
