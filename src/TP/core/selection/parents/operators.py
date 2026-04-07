@@ -15,7 +15,7 @@ Functions:
 
 import random
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List
 
 import numpy as np
 from pydantic.dataclasses import dataclass
@@ -29,15 +29,16 @@ class ParentSelector(ABC):
     def select_parents(
         self,
         num_parents: int,
-        pop: Population | List[Individual],
+        pop: Population,
     ) -> List[int]:
         pass
 
 
 @dataclass
 class RouletteStrategy(ParentSelector):
+    @staticmethod
     def calc_selection_prob(pop: Population) -> List[float]:
-        indiv_fitness = [ind.get_fitness() for ind in pop.ind_list]
+        indiv_fitness = [ind.fitness for ind in pop.ind_list]
         indiv_fitness = np.array(indiv_fitness)
         total_fitness = sum(indiv_fitness)
         if total_fitness == 0:
@@ -48,14 +49,17 @@ class RouletteStrategy(ParentSelector):
     def select_parents(
         self,
         num_parents: int,
-        pop: Optional[Population],
-    ) -> List[int]:
+        pop: Population,
+    ) -> List[Individual]:
+        parents_list = []
         if pop._select_prob_cache is None:
             pop._select_prob_cache = self.calc_selection_prob(pop)
         fitness_list = pop._select_prob_cache
-        parents = random.choices(
+        parents_pos = random.choices(
             range(len(fitness_list)),
             weights=fitness_list,
             k=num_parents,
         )
-        return parents
+        for pos in parents_pos:
+            parents_list.append(pop.ind_list[pos])
+        return parents_list

@@ -1,6 +1,6 @@
-from abc import abstractmethod
 from typing import Optional
 
+from pydantic import ConfigDict, Field
 from pydantic.dataclasses import dataclass
 
 from TP.core.fitness import FitnessCalculator
@@ -17,60 +17,84 @@ from TP.core.state import EAState
 from TP.core.variation.mutation import MutOperator
 from TP.core.variation.recombination import PMX, RecombOperator
 from TP.problems.queens.fitness import QueensBoardFitness
-from TP.problems.queens.individuals.factory import PermIndividualFactory
 from TP.problems.queens.individuals.population import QueensPopulation
 from TP.problems.queens.individuals.representation import QueensIndividual
 from TP.problems.queens.utils.initialization import RandomPermInitilizer
 from TP.problems.queens.variation.mutation import QueenSwapMutation
 
 
-@dataclass
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True), kw_only=True)
 class QueenProblemOrchestrator(OrchestratorTemplate):
     board_size: int
     pop_size: int
-    n_offsprings: Optional[int]
+    n_offsprings: Optional[int]  # Per recombination
 
     # defaults
-    parent_selector: ParentSelector = RouletteStrategy()
-    recombinator: RecombOperator = PMX()
-    survivor_selector: SurvivorSelector = ElitismGenerational()
+    parent_selector: ParentSelector = Field(default_factory=RouletteStrategy)
+    recombinator: RecombOperator = Field(default_factory=PMX)
+    survivor_selector: SurvivorSelector = Field(
+        default_factory=ElitismGenerational
+    )
 
-    mutation_operator: MutOperator = QueenSwapMutation()
-    fitness_calculator: FitnessCalculator = QueensBoardFitness()
+    mutation_operator: MutOperator = Field(default_factory=QueenSwapMutation)
+    fitness_calculator: FitnessCalculator = Field(
+        default_factory=QueensBoardFitness
+    )
 
-    ind_initializer: RandomPermInitilizer = RandomPermInitilizer()
+    ind_initializer: RandomPermInitilizer = Field(
+        default_factory=RandomPermInitilizer
+    )
 
     p_m: float = 0.2
     p_c: float = 0.5
 
     def generate_individual(self) -> QueensIndividual:
         chrm = self.ind_initializer.generate_chrm(self.board_size)
-        return PermIndividualFactory(
-            chrm,
-            fitness_calculator=self.fitness_calculator,
-            mutation_operator=self.mutation_operator,
-            p_m=self.p_m,
-        ).create()
+        return QueensIndividual(chrm, self.fitness_calculator)
 
-    @abstractmethod
+    @staticmethod
     def stop_criteria(state: EAState) -> bool:
-        """
-        ABstraction of algorithm stop criteria
+        if state.feasibility:
+            return True
+        return False
 
-        Parameters
-        ----------
-        state : EAState
-            State class that keeps track of relevant information
-            to reach stop criteria.
+    @staticmethod
+    def check_feasibility(
+        population: QueensPopulation,
+    ) -> bool:
+        for ind in population:
+            if ind.fitness == 0:
+                return True
+        return False
 
-        Returns
-        -------
-        bool
-            Decision to stop or not the evolutionary iterations
-        """
-        pass
+    def run(self):
+        population = self.generate_initial_population()
 
-    @abstractmethod
+        state = EAState(
+            population=population,
+            generation=0,
+            feasibility=False,
+        )
+
+        while not self.stop_criteria(state):
+            offsprings = self.generate_offsprings(
+                population,
+            )
+            mutated_offsprings = self.mutate(offsprings)
+
+            population = self.select_next_generation(
+                mutated_offsprings=mutated_offsprings,
+                population=population,
+            )
+            feasible = self.check_feasibility(population)
+            state.population = population
+            state.generation += 1
+            state.feasibility = feasible
+
+        output_individual = self.get_output(population)
+        return output_individual
+
+    @staticmethod
     def get_output(population: QueensPopulation) -> QueensIndividual:
         """
         Abstract method to get output from population after stop
@@ -84,6 +108,3 @@ class QueenProblemOrchestrator(OrchestratorTemplate):
         most_fit = [indiv.fitness for indiv in population.ind_list]
         most_fit_position = most_fit.index(max(most_fit))
         return population.ind_list[most_fit_position]
-
-
-# TODO: definir stop criteria e definir get output.

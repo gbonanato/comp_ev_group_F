@@ -1,18 +1,14 @@
-import random
 from typing import List, Optional, Tuple
 
 from pydantic import field_validator
 
 from TP.core.individuals.representation import Individual
 from TP.problems.queens.fitness import QueensBoardFitness
-from TP.problems.queens.variation.mutation import QueenSwapMutation
 
 
 class QueensIndividual(Individual):
-    chrm: List[int]
+    # chrm: List[int]
     fitness_calculator: QueensBoardFitness
-    mutation_operator: QueenSwapMutation
-    p_m: float = 0.1
     _fitness: Optional[float] = None
     _unfit_positions: Optional[List[Tuple[int, int]]] = None
 
@@ -31,17 +27,6 @@ class QueensIndividual(Individual):
                 'Queens positions are incompatible with board size.'
             )
         return v
-
-    def mutate(self):
-        if random.uniform(0, 1) <= self.p_m:
-            mutated_chrm = self.mutation_operator.execute(
-                self.chrm, self.unfit_pos
-            )
-            self.invalidate_fitness()
-            self.invalidate_unfit_pos()
-            self.chrm = mutated_chrm
-        else:
-            return self.chrm
 
     def check_unfit_positions(self) -> List[tuple[int, int]]:
         """
@@ -65,18 +50,21 @@ class QueensIndividual(Individual):
                     incompatible_pos.append(incompatible_pair)
         return incompatible_pos
 
+    def decode(self):
+        return self.chrm
+
     @property
     def fitness(self):
         if self._fitness is None:
-            self._fitness = self.fitness_calculator.calc_fitness(
-                self.unfit_pos
-            )
+            self._fitness = self.fitness_calculator.calc_fitness(self.chrm)
         return self._fitness
 
     @property
     def unfit_pos(self):
         if self._unfit_positions is None:
-            self._unfit_positions = self.check_unfit_positions()
+            self._unfit_positions = (
+                self.fitness_calculator.check_unfit_positions(self.chrm)
+            )
         return self._unfit_positions
 
     def invalidate_fitness(self):

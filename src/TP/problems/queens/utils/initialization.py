@@ -7,7 +7,6 @@ from TP.core.utils.initialization import IndividualInitializer
 
 @dataclass
 class RandomPermInitilizer(IndividualInitializer):
-    chrm_size: int
-
-    def generate_chrm(self):
-        return random.sample(range(self.chrm_size), self.chrm_size)
+    @staticmethod
+    def generate_chrm(chrm_size):
+        return random.sample(range(chrm_size), chrm_size)

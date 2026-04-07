@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from TP.core.fitness import FitnessCalculator
-from TP.core.individuals.factory import IndividualFactory
 from TP.core.individuals.population import Population
 from TP.core.individuals.representation import Individual
 from TP.core.selection.parents.operators import ParentSelector
@@ -15,12 +15,10 @@ from TP.core.variation.mutation import MutOperator
 from TP.core.variation.recombination import RecombOperator
 
 
-@dataclass
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class OrchestratorTemplate(ABC):
     pop_size: int
-    n_offsprings: Optional[int]
 
-    # defaults
     parent_selector: ParentSelector
     recombinator: RecombOperator
     survivor_selector: SurvivorSelector
@@ -30,6 +28,9 @@ class OrchestratorTemplate(ABC):
 
     ind_initializer: IndividualInitializer
 
+    # defaults
+    n_parents: Optional[int] = 2
+    n_offsprings: Optional[int] = 2
     p_m: float = 0.1
     p_c: float = 0.7
 
@@ -60,18 +61,10 @@ class OrchestratorTemplate(ABC):
             pop_list.append(ind)
         population = Population(
             ind_list=pop_list,
-            parent_selector=self.parent_selector,
-            recombinator=self.recombinator,
-            survivor_selector=self.survivor_selector,
-            indiv_factory=IndividualFactory(
-                fitness_calculator=self.fitness_calculator,
-                mutation_operator=self.mutation_operator,
-                p_m=self.p_m,
-            ),
         )
         return population
 
-    def mutate(individuals_list: List[Individual]) -> List[Individual]:
+    def mutate(self, individuals_list: List[Individual]) -> List[Individual]:
         """
         Abstract implementation of mutation
 
@@ -85,9 +78,12 @@ class OrchestratorTemplate(ABC):
         List[Individual]
             Individuals after recombination and mutation
         """
-        return [ind.mutate() for ind in individuals_list]
+        return [
+            self.mutation_operator.execute(ind) for ind in individuals_list
+        ]
 
     def select_next_generation(
+        self,
         mutated_offsprings: List[Individual],
         population: Population,
     ) -> Population:
@@ -106,9 +102,10 @@ class OrchestratorTemplate(ABC):
         Population
             Next generation population
         """
-        next_gen = population.select_next_generation(
-            mutated_offsprings,
-            population.size,
+        next_gen = self.survivor_selector.select_survivors(
+            parents=population.ind_list,
+            offsprings=mutated_offsprings,
+            n_survivors=population.size,
         )
         return next_gen
 
@@ -130,7 +127,42 @@ class OrchestratorTemplate(ABC):
         """
         pass
 
-    def generate_offsprings(self, population) -> Individual:
+    def select_parents(self, population: Population) -> List[Individual]:
+        """
+        Method to select parents.
+
+        Returns
+        -------
+        List[Individual]
+            list of selected parents individuals
+        """
+        parents_list = self.parent_selector.select_parents(
+            num_parents=self.n_parents,
+            pop=population,
+        )
+        return parents_list
+
+    def recombine_parents(self, parents_list) -> List[Individual]:
+        """
+        Method to execute crossover.
+
+        Returns
+        -------
+        List[Individual]
+            List of individuals after crossover
+        """
+        offsprings_list = self.recombinator.recombine(
+            parents_list=parents_list,
+            fitness_calculator=self.fitness_calculator,
+            p_c=self.p_c,
+        )
+        return offsprings_list
+
+    def generate_offsprings(
+        self,
+        population: Population,
+        total_offsprings: int = None,
+    ) -> Individual:
         """
         Method to generate offsprings.
 
@@ -139,8 +171,28 @@ class OrchestratorTemplate(ABC):
         Individual
             Most relevant individual from population
         """
-        offsprings = population.generate_offsprings(self.n_offsprings)
-        return offsprings
+
+        if total_offsprings is None:
+            total_offsprings = population.size
+        assert total_offsprings % self.recombinator.n_offsprings == 0
+
+        offspings_list = []
+
+        while len(offspings_list) < total_offsprings:
+            parents_list = self.parent_selector.select_parents(
+                num_parents=self.recombinator.n_parents,
+                pop=population,
+            )
+            children = self.recombinator.recombine(
+                parents_list=parents_list,
+                fitness_calculator=self.fitness_calculator,
+                p_c=self.p_c,
+            )
+
+            for child in children:
+                offspings_list.append(child)
+
+        return offspings_list
 
     @abstractmethod
     def get_output(population: Population) -> Individual:
@@ -174,8 +226,8 @@ class OrchestratorTemplate(ABC):
             mutated_offsprings = self.mutate(offsprings)
 
             population = self.select_next_generation(
-                mutated_offsprings,
-                population.size,
+                mutated_offsprings=mutated_offsprings,
+                population=population,
             )
             state.population = population
             state.generation += 1

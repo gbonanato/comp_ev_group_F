@@ -6,8 +6,8 @@ from TP.core.individuals.population import Population
 @dataclass
 class EAState:
     population: Population
-    generation: int
-    feasibility: bool
+    generation: int = 0
+    feasibility: bool = False
     # n_evaluations: int
     # best_fitness: float
     # start_time: float
