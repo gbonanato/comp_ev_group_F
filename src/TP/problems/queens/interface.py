@@ -1,10 +1,12 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import ConfigDict, Field
 from pydantic.dataclasses import dataclass
 
 from TP.core.fitness import FitnessCalculator
 from TP.core.interface import OrchestratorTemplate
+from TP.core.logging.observer import EAObserver
+from TP.core.logging.progress import EALogger
 from TP.core.selection.parents.operators import (
     ParentSelector,
     RouletteStrategy,
@@ -45,6 +47,9 @@ class QueenProblemOrchestrator(OrchestratorTemplate):
         default_factory=RandomPermInitilizer
     )
 
+    observers: List[EAObserver] = Field(default_factory=list)
+    loggers: List[EALogger] = Field(default_factory=list)
+
     p_m: float = 0.2
     p_c: float = 0.5
 
@@ -76,6 +81,8 @@ class QueenProblemOrchestrator(OrchestratorTemplate):
             feasibility=False,
         )
 
+        self._notify_start(state)
+
         while not self.stop_criteria(state):
             offsprings = self.generate_offsprings(
                 population,
@@ -91,6 +98,9 @@ class QueenProblemOrchestrator(OrchestratorTemplate):
             state.generation += 1
             state.feasibility = feasible
 
+            self._notify_generation_end(state)
+
+        self._notify_end(state)
         output_individual = self.get_output(population)
         return output_individual
 

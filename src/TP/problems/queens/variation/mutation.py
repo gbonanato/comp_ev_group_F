@@ -12,7 +12,7 @@ class QueenSwapMutation(MutOperator):
         individual: QueensIndividual,
     ) -> List:
         positions = list(range(len(individual.chrm)))
-        possible_swaps = combinations(positions, 2)
+        possible_swaps = list(combinations(positions, 2))
         if individual.unfit_pos:
             exclude_set = set(individual.unfit_pos)
             incompatible_pos = [
@@ -24,15 +24,16 @@ class QueenSwapMutation(MutOperator):
                 for swap in possible_swaps
                 if swap not in exclude_set and pos in swap
             ]
+
+            if not significant_swaps:
+                return individual
+
             pos_1, pos_2 = random.choice(significant_swaps)
-            val_1 = individual.chrm[
-                pos_1
-            ]  # Saves val from pos_1 before overwriting
-            individual.chrm[pos_1] = individual.chrm[pos_2]
-            individual.chrm[pos_2] = val_1
+            new_chrm = individual.chrm.copy()
+            new_chrm[pos_1], new_chrm[pos_2] = new_chrm[pos_2], new_chrm[pos_1]
 
             return QueensIndividual(  # Ajustar (chamar um factory)
-                individual.chrm, individual.fitness_calculator
+                new_chrm, individual.fitness_calculator
             )
 
         else:

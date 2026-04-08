@@ -7,6 +7,8 @@ from pydantic.dataclasses import dataclass
 from TP.core.fitness import FitnessCalculator
 from TP.core.individuals.population import Population
 from TP.core.individuals.representation import Individual
+from TP.core.logging.observer import EAObserver
+from TP.core.logging.progress import EALogger
 from TP.core.selection.parents.operators import ParentSelector
 from TP.core.selection.survivors.operators import SurvivorSelector
 from TP.core.state import EAState
@@ -27,6 +29,8 @@ class OrchestratorTemplate(ABC):
     fitness_calculator: FitnessCalculator
 
     ind_initializer: IndividualInitializer
+    observers: List[EAObserver]
+    loggers: List[EALogger]
 
     # defaults
     n_parents: Optional[int] = 2
@@ -218,6 +222,8 @@ class OrchestratorTemplate(ABC):
             generation=0,
         )
 
+        self._notify_start(state)
+
         while self.stop_criteria(state):
             offsprings = self.generate_offsprings(
                 population,
@@ -232,5 +238,26 @@ class OrchestratorTemplate(ABC):
             state.population = population
             state.generation += 1
 
+            self._notify_generation_end(state)
+
+        self._notify_end(state)
         output_individual = self.get_output(population)
-        return output_individual.decode()
+        return output_individual
+
+    def _notify_start(self, state):
+        for obs in self.observers or []:
+            obs.on_start(state)
+        for log in self.loggers or []:
+            log.on_start(state)
+
+    def _notify_generation_end(self, state):
+        for obs in self.observers or []:
+            obs.on_generation_end(state)
+        for log in self.loggers or []:
+            log.on_generation_end(state)
+
+    def _notify_end(self, state):
+        for obs in self.observers or []:
+            obs.on_end(state)
+        for log in self.loggers or []:
+            log.on_end(state)
