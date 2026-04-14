@@ -61,6 +61,8 @@ class QueenProblemOrchestrator(OrchestratorTemplate):
     def stop_criteria(state: EAState) -> bool:
         if state.feasibility:
             return True
+        elif state.generation == 10000:
+            return True
         return False
 
     @staticmethod
@@ -102,6 +104,12 @@ class QueenProblemOrchestrator(OrchestratorTemplate):
 
         self._notify_end(state)
         output_individual = self.get_output(population)
+        if not state.feasibility:
+            print(
+                f'Nenhum indivíduo factível encontrado após {state.generation} gerações'
+            )
+            return False
+
         return output_individual
 
     @staticmethod
