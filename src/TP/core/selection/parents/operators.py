@@ -17,7 +17,6 @@ import random
 from abc import ABC, abstractmethod
 from typing import List
 
-import numpy as np
 from pydantic.dataclasses import dataclass
 
 from TP.core.individuals.population import Population
@@ -39,12 +38,22 @@ class RouletteStrategy(ParentSelector):
     @staticmethod
     def calc_selection_prob(pop: Population) -> List[float]:
         indiv_fitness = [ind.fitness for ind in pop.ind_list]
-        indiv_fitness = np.array(indiv_fitness)
-        total_fitness = sum(indiv_fitness)
-        if total_fitness == 0:
-            return [1 / len(indiv_fitness)] * len(indiv_fitness)
 
-        return [f / total_fitness for f in indiv_fitness]
+        # Converter fitness (-conflicts) → conflicts positivos
+        conflicts = [-f for f in indiv_fitness]
+
+        epsilon = 1e-6
+
+        # Evitar caso degenerado (todos iguais)
+        if all(c == conflicts[0] for c in conflicts):
+            return [1 / len(conflicts)] * len(conflicts)
+
+        # Converter para pesos (menor conflito → maior peso)
+        weights = [1 / (c + epsilon) for c in conflicts]
+
+        total = sum(weights)
+
+        return [w / total for w in weights]
 
     def select_parents(
         self,
