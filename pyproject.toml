@@ -20,7 +20,8 @@ dependencies = [
     "ipykernel",
     "pylint==3.3.*",
     "pandas-stubs",
-    "mypy"
+    "mypy",
+    "tsplib95",
 ]
 
 
