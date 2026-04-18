@@ -18,7 +18,7 @@ from TP.core.variation.recombination import RecombOperator
 
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True))
-class OrchestratorTemplate(ABC):
+class GAOrchestratorTemplate(ABC):
     pop_size: int
 
     parent_selector: ParentSelector

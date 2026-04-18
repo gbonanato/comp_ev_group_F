@@ -26,7 +26,7 @@ from TP.problems.queens.variation.mutation import QueenSwapMutation
 
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True), kw_only=True)
-class QueenProblemOrchestrator(GAOrchestratorTemplate):
+class TSPOrchestrator(GAOrchestratorTemplate):
     board_size: int
     pop_size: int
     n_offsprings: Optional[int]  # Per recombination

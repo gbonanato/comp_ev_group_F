@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import List, Optional
 
 from pydantic import ConfigDict
@@ -14,13 +14,13 @@ class Individual(ABC):
     _fitness: Optional[float] = None
 
     @property
-    @abstractmethod
     def fitness(self):
-        pass
+        if self._fitness is None:
+            self._fitness = self.fitness_calculator.calc_fitness(self.chrm)
+        return self._fitness
 
-    @abstractmethod
     def decode(self):
-        pass
+        return self.chrm
 
 
 # # REALOCATE
