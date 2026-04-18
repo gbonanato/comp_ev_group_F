@@ -1,14 +1,29 @@
+from dataclasses import dataclass
 from typing import List
 
-import numpy as np
+from tsplib95.models import StandardProblem
 
 from TP.core.fitness import FitnessCalculator
 
+epsilon = 1e-6
 
+
+@dataclass
 class TSPFitness(FitnessCalculator):
-    def calc_fitness(self, chrm: List[int], dist_matrix: np.ndarray):
-        cost = 0
-        for pos in range(2, len(chrm) + 1):
-            i, j = chrm[pos - 2 : pos]
-            cost += dist_matrix[i][j]
-        return cost
+    problem_instance: StandardProblem
+
+    def calc_fitness(
+        self,
+        chrm: List[int],
+    ):
+        # if chrm[0] != 1 and chrm[-1] != 1: Se isso vai ser add em todos...
+        # não faz diferença para achar o melhor!!
+        #     chrm.insert(0, 1)  # Ensures cicle starts
+        #     chrm.append(1)  # and ends on 1
+        total_distance = sum(
+            self.problem_instance.get_weight(chrm[i], chrm[i + 1])
+            for i in range(len(chrm) - 1)
+        )
+        fitness = 1 / (total_distance + epsilon)
+
+        return fitness

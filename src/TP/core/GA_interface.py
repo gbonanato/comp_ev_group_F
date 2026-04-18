@@ -5,6 +5,8 @@ from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from TP.core.fitness import FitnessCalculator
+from TP.core.individuals.encoding import Encoder
+from TP.core.individuals.factory import IndividualFactory
 from TP.core.individuals.population import Population
 from TP.core.individuals.representation import Individual
 from TP.core.logging.observer import EAObserver
@@ -21,22 +23,43 @@ from TP.core.variation.recombination import RecombOperator
 class GAOrchestratorTemplate(ABC):
     pop_size: int
 
+    encoder: Encoder
     parent_selector: ParentSelector
     recombinator: RecombOperator
     survivor_selector: SurvivorSelector
 
     mutation_operator: MutOperator
-    fitness_calculator: FitnessCalculator
 
     ind_initializer: IndividualInitializer
     observers: List[EAObserver]
     loggers: List[EALogger]
 
     # defaults
+    fitness_calculator: Optional[FitnessCalculator] = None
+    individual_factory: Optional[IndividualFactory] = None
+    max_generations: Optional[int] = 1000
     n_parents: Optional[int] = 2
     n_offsprings: Optional[int] = 2
     p_m: float = 0.1
     p_c: float = 0.7
+
+    def __post_init__(self):
+        self._configure_fitness()
+        self._configure_factory()
+
+    @abstractmethod
+    def _configure_fitness(self):
+        """Subclass defines fitness semantics"""
+
+    def _configure_factory(self):
+        if self.individual_factory is None:
+            if self.fitness_calculator is None:
+                raise RuntimeError('Fitness must be configured first')
+
+            self.individual_factory = IndividualFactory(
+                fitness_calculator=self.fitness_calculator,
+                encoder=self.encoder,
+            )
 
     @abstractmethod
     def generate_individual(self) -> Individual:
@@ -83,7 +106,8 @@ class GAOrchestratorTemplate(ABC):
             Individuals after recombination and mutation
         """
         return [
-            self.mutation_operator.execute(ind) for ind in individuals_list
+            self.individual_factory.create(self.mutation_operator.execute(ind))
+            for ind in individuals_list
         ]
 
     def select_next_generation(
@@ -155,12 +179,17 @@ class GAOrchestratorTemplate(ABC):
         List[Individual]
             List of individuals after crossover
         """
-        offsprings_list = self.recombinator.recombine(
+        offsprings_chrm_list = self.recombinator.recombine(
             parents_list=parents_list,
             fitness_calculator=self.fitness_calculator,
             p_c=self.p_c,
         )
-        return offsprings_list
+        offsprings_ind_list = [
+            self.individual_factory.create(chrm)
+            for chrm in offsprings_chrm_list
+        ]
+
+        return offsprings_ind_list
 
     def generate_offsprings(
         self,
@@ -180,23 +209,22 @@ class GAOrchestratorTemplate(ABC):
             total_offsprings = population.size
         assert total_offsprings % self.recombinator.n_offsprings == 0
 
-        offspings_list = []
+        offspings_ind_list = []
 
-        while len(offspings_list) < total_offsprings:
+        while len(offspings_ind_list) < total_offsprings:
             parents_list = self.parent_selector.select_parents(
                 num_parents=self.recombinator.n_parents,
                 pop=population,
             )
-            children = self.recombinator.recombine(
+            children_chrm_list = self.recombinator.recombine(
                 parents_list=parents_list,
-                fitness_calculator=self.fitness_calculator,
                 p_c=self.p_c,
             )
 
-            for child in children:
-                offspings_list.append(child)
+            for chrm in children_chrm_list:
+                offspings_ind_list.append(self.individual_factory.create(chrm))
 
-        return offspings_list
+        return offspings_ind_list
 
     @abstractmethod
     def get_output(population: Population) -> Individual:

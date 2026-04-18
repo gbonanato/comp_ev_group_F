@@ -2,9 +2,12 @@ from typing import List, Optional
 
 from pydantic import ConfigDict, Field
 from pydantic.dataclasses import dataclass
+from tsplib95.models import StandardProblem
 
-from TP.core.fitness import FitnessCalculator
 from TP.core.GA_interface import GAOrchestratorTemplate
+from TP.core.individuals.encoding import PermutationEncoder
+from TP.core.individuals.population import Population
+from TP.core.individuals.representation import Individual
 from TP.core.logging.observer import EAObserver
 from TP.core.logging.progress import EALogger
 from TP.core.selection.parents.operators import (
@@ -16,62 +19,57 @@ from TP.core.selection.survivors.operators import (
     SurvivorSelector,
 )
 from TP.core.state import EAState
-from TP.core.variation.mutation import MutOperator
+from TP.core.utils.initialization import IndividualInitializer
+from TP.core.variation.mutation import RSM, MutOperator
 from TP.core.variation.recombination import PMX, RecombOperator
-from TP.problems.queens.fitness import QueensBoardFitness
-from TP.problems.queens.individuals.population import QueensPopulation
-from TP.problems.queens.individuals.representation import QueensIndividual
-from TP.problems.queens.utils.initialization import RandomPermInitilizer
-from TP.problems.queens.variation.mutation import QueenSwapMutation
+from TP.problems.tsp.fitness import TSPFitness
+from TP.problems.tsp.individuals.encoding import TSPEncoder
+from TP.problems.tsp.utils.initialization import TSPInitilizer
 
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True), kw_only=True)
 class TSPOrchestrator(GAOrchestratorTemplate):
-    board_size: int
+    problem_instance: StandardProblem
     pop_size: int
     n_offsprings: Optional[int]  # Per recombination
 
     # defaults
+    encoder: PermutationEncoder = Field(default_factory=TSPEncoder)
     parent_selector: ParentSelector = Field(default_factory=RouletteStrategy)
     recombinator: RecombOperator = Field(default_factory=PMX)
     survivor_selector: SurvivorSelector = Field(
         default_factory=ElitismGenerational
     )
 
-    mutation_operator: MutOperator = Field(default_factory=QueenSwapMutation)
-    fitness_calculator: FitnessCalculator = Field(
-        default_factory=QueensBoardFitness
-    )
+    mutation_operator: MutOperator = Field(default_factory=RSM)
 
-    ind_initializer: RandomPermInitilizer = Field(
-        default_factory=RandomPermInitilizer
+    ind_initializer: IndividualInitializer = Field(
+        default_factory=TSPInitilizer
     )
 
     observers: List[EAObserver] = Field(default_factory=list)
     loggers: List[EALogger] = Field(default_factory=list)
 
-    p_m: float = 0.2
-    p_c: float = 0.5
+    p_m: float = 0.1
+    p_c: float = 0.7
 
-    def generate_individual(self) -> QueensIndividual:
-        chrm = self.ind_initializer.generate_chrm(self.board_size)
-        return QueensIndividual(chrm, self.fitness_calculator)
+    def _configure_fitness(self):
+        self.fitness_calculator = TSPFitness(
+            problem_instance=self.problem_instance
+        )
 
-    @staticmethod
-    def stop_criteria(state: EAState) -> bool:
-        if state.feasibility:
+    def __post_init__(self):
+        super().__post_init__()
+
+    def generate_individual(self) -> Individual:
+        problem_size = self.problem_instance.dimension
+        chrm = self.ind_initializer.generate_chrm(problem_size)
+        individual = self.individual_factory.create(chrm)
+        return individual
+
+    def stop_criteria(self, state: EAState) -> bool:
+        if state.generation == self.max_generations:
             return True
-        elif state.generation == 10000:
-            return True
-        return False
-
-    @staticmethod
-    def check_feasibility(
-        population: QueensPopulation,
-    ) -> bool:
-        for ind in population:
-            if ind.fitness == 0:
-                return True
         return False
 
     def run(self):
@@ -95,25 +93,18 @@ class TSPOrchestrator(GAOrchestratorTemplate):
                 mutated_offsprings=mutated_offsprings,
                 population=population,
             )
-            feasible = self.check_feasibility(population)
             state.population = population
             state.generation += 1
-            state.feasibility = feasible
 
             self._notify_generation_end(state)
 
         self._notify_end(state)
         output_individual = self.get_output(population)
-        if not state.feasibility:
-            print(
-                f'Nenhum indivíduo factível encontrado após {state.generation} gerações'
-            )
-            return False
 
         return output_individual
 
     @staticmethod
-    def get_output(population: QueensPopulation) -> QueensIndividual:
+    def get_output(population: Population) -> Individual:
         """
         Abstract method to get output from population after stop
         criteria is reached.

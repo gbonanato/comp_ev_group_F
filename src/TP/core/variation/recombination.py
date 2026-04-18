@@ -6,7 +6,6 @@ from typing import List, Optional
 
 from TP.core.fitness import FitnessCalculator
 from TP.core.individuals.representation import Individual
-from TP.problems.queens.individuals.representation import QueensIndividual
 
 
 @dataclass
@@ -43,7 +42,6 @@ class PMX(RecombOperator):
     def recombine(
         self,
         parents_list: List[Individual],
-        fitness_calculator: FitnessCalculator,
         p_c: float = 0.7,
     ) -> List[Individual]:
         if len(parents_list) != self.n_parents:
@@ -76,11 +74,9 @@ class PMX(RecombOperator):
                             pos = non_ref_parent_mapping[map_key]
                         chrm[pos] = val
                         offspring_set.add(val)
-                offsprings_list.append(
-                    QueensIndividual(chrm, fitness_calculator)
-                )  # Importante factory para não termos que escolher que tipo de indivíduo é!!
+                offsprings_list.append(chrm)
 
         else:
-            offsprings_list = parents_list
+            offsprings_list = [ind.chrm for ind in parents_list]
 
         return offsprings_list

@@ -37,23 +37,11 @@ class ParentSelector(ABC):
 class RouletteStrategy(ParentSelector):
     @staticmethod
     def calc_selection_prob(pop: Population) -> List[float]:
-        indiv_fitness = [ind.fitness for ind in pop.ind_list]
+        pop_fitness = [ind.fitness for ind in pop.ind_list]
 
-        # Converter fitness (-conflicts) → conflicts positivos
-        conflicts = [-f for f in indiv_fitness]
+        total = sum(pop_fitness)
 
-        epsilon = 1e-6
-
-        # Evitar caso degenerado (todos iguais)
-        if all(c == conflicts[0] for c in conflicts):
-            return [1 / len(conflicts)] * len(conflicts)
-
-        # Converter para pesos (menor conflito → maior peso)
-        weights = [1 / (c + epsilon) for c in conflicts]
-
-        total = sum(weights)
-
-        return [w / total for w in weights]
+        return [indiv_fitness / total for indiv_fitness in pop_fitness]
 
     def select_parents(
         self,

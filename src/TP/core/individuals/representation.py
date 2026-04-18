@@ -1,17 +1,21 @@
-from abc import ABC
 from typing import List, Optional
 
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from TP.core.fitness import FitnessCalculator
+from TP.core.individuals.encoding import Encoder
 
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True))
-class Individual(ABC):
+class Individual:
     chrm: List
+    encoder: Encoder
     fitness_calculator: FitnessCalculator
     _fitness: Optional[float] = None
+
+    def __post_init__(self):
+        self.encoder.validate(self.chrm)
 
     @property
     def fitness(self):
@@ -20,10 +24,4 @@ class Individual(ABC):
         return self._fitness
 
     def decode(self):
-        return self.chrm
-
-
-# # REALOCATE
-#     fitness_calculator: FitnessCalculator
-#     mutation_operator: MutOperator
-#     p_m: float = Field(default=0.1, ge=0.0, le=1.0)
+        return self.encoder.decode(self.chrm)

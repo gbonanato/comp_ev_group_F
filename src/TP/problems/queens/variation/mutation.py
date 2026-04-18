@@ -2,6 +2,7 @@ import random
 from itertools import combinations
 from typing import List
 
+from TP.core.individuals.representation import Individual
 from TP.core.variation.mutation import MutOperator
 from TP.problems.queens.individuals.representation import QueensIndividual
 
@@ -10,7 +11,7 @@ class QueenSwapMutation(MutOperator):
     @staticmethod
     def execute(
         individual: QueensIndividual,
-    ) -> List:
+    ) -> Individual:
         positions = list(range(len(individual.chrm)))
         possible_swaps = list(combinations(positions, 2))
         if individual.unfit_pos:
@@ -37,12 +38,4 @@ class QueenSwapMutation(MutOperator):
             )
 
         else:
-            # pos_1, pos_2 = random.choice(significant_swaps)
-            # val_1 = individual.chrm[
-            #     pos_1
-            # ]  # Saves val from pos_1 before overwriting
-            # individual.chrm[pos_1] = individual.chrm[pos_2]
-            # individual.chrm[pos_2] = val_1
-            # individual.invalidate_fitness()
-            # individual.invalidate_unfit_pos()
             return individual

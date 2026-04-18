@@ -13,13 +13,24 @@ Functions:
     create: creates individual.
 """
 
-from abc import ABC, abstractmethod
 from typing import Any, List
 
+from pydantic import ConfigDict
+from pydantic.dataclasses import dataclass
+
+from TP.core.fitness import FitnessCalculator
+from TP.core.individuals.encoding import Encoder
 from TP.core.individuals.representation import Individual
 
 
-class IndividualFactory(ABC):
-    @abstractmethod
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
+class IndividualFactory:
+    fitness_calculator: FitnessCalculator
+    encoder: Encoder
+
     def create(self, chrm: List[Any]) -> Individual:
-        pass
+        return Individual(
+            chrm=chrm,
+            encoder=self.encoder,
+            fitness_calculator=self.fitness_calculator,
+        )

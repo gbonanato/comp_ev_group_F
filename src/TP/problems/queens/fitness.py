@@ -29,6 +29,9 @@ class QueensBoardFitness(FitnessCalculator):
                     incompatible_pos.append(incompatible_pair)
         return incompatible_pos
 
+    # TODO:
+    # Ajustar: O calculo de probabilidades correto estava delegado para o
+    # Operador de seleção por roleta!!
     def calc_fitness(self, chrm: List[int], weight: float = -1):
         unfit_positions = self.check_unfit_positions(chrm)
         return len(unfit_positions) * weight

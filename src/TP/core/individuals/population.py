@@ -24,12 +24,3 @@ class Population(ABC):
 
     def get_individuals_fitness(self):
         return [i.fitness for i in self.ind_list]
-
-
-# REALOCATE:
-
-# parent_selector: ParentSelector
-# recombinator: RecombOperator
-# survivor_selector: SurvivorSelector
-# indiv_factory: IndividualFactory
-# p_c: float

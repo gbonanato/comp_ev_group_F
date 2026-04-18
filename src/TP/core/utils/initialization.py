@@ -1,5 +1,6 @@
 import random
 from abc import ABC, abstractmethod
+from typing import List
 
 
 class IndividualInitializer(ABC):
@@ -8,8 +9,7 @@ class IndividualInitializer(ABC):
         pass
 
 
-@dataclass
 class RandomPermInitilizer(IndividualInitializer):
     @staticmethod
-    def generate_chrm(chrm_size):
+    def generate_chrm(chrm_size: int) -> List[int]:
         return random.sample(range(chrm_size), chrm_size)
