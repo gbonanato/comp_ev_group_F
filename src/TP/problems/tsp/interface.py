@@ -21,10 +21,11 @@ from TP.core.selection.survivors.operators import (
 from TP.core.state import EAState
 from TP.core.utils.initialization import IndividualInitializer
 from TP.core.variation.mutation import RSM, MutOperator
-from TP.core.variation.recombination import PMX, RecombOperator
+from TP.core.variation.recombination import RecombOperator
 from TP.problems.tsp.fitness import TSPFitness
 from TP.problems.tsp.individuals.encoding import TSPEncoder
 from TP.problems.tsp.utils.initialization import TSPInitilizer
+from TP.problems.tsp.variation.recombination import SCX
 
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True), kw_only=True)
@@ -36,7 +37,7 @@ class TSPOrchestrator(GAOrchestratorTemplate):
     # defaults
     encoder: PermutationEncoder = Field(default_factory=TSPEncoder)
     parent_selector: ParentSelector = Field(default_factory=RouletteStrategy)
-    recombinator: RecombOperator = Field(default_factory=PMX)
+    recombinator: RecombOperator = Field(default_factory=SCX)
     survivor_selector: SurvivorSelector = Field(
         default_factory=ElitismGenerational
     )
@@ -96,12 +97,49 @@ class TSPOrchestrator(GAOrchestratorTemplate):
             state.population = population
             state.generation += 1
 
-            self._notify_generation_end(state)
+            if state.generation % 250 == 0:
+                self._notify_generation_end(state)
 
         self._notify_end(state)
         output_individual = self.get_output(population)
 
         return output_individual
+
+    def generate_offsprings(
+        self,
+        population: Population,
+        total_offsprings: int = None,
+    ) -> Individual:
+        """
+        Method to generate offsprings.
+
+        Returns
+        -------
+        Individual
+            Most relevant individual from population
+        """
+
+        if total_offsprings is None:
+            total_offsprings = population.size
+        assert total_offsprings % self.recombinator.n_offsprings == 0
+
+        offspings_ind_list = []
+
+        while len(offspings_ind_list) < total_offsprings:
+            parents_list = self.parent_selector.select_parents(
+                num_parents=self.recombinator.n_parents,
+                pop=population,
+            )
+            children_chrm_list = self.recombinator.recombine(
+                parents_list=parents_list,
+                problem_instance=self.problem_instance,
+                p_c=self.p_c,
+            )
+
+            for chrm in children_chrm_list:
+                offspings_ind_list.append(self.individual_factory.create(chrm))
+
+        return offspings_ind_list
 
     @staticmethod
     def get_output(population: Population) -> Individual:
@@ -116,4 +154,5 @@ class TSPOrchestrator(GAOrchestratorTemplate):
         """
         most_fit = [indiv.fitness for indiv in population.ind_list]
         most_fit_position = most_fit.index(max(most_fit))
-        return population.ind_list[most_fit_position]
+        best_ind = population.ind_list[most_fit_position]
+        return best_ind.decode()
