@@ -51,7 +51,7 @@ class TSPOrchestrator(GAOrchestratorTemplate):
     observers: List[EAObserver] = Field(default_factory=list)
     loggers: List[EALogger] = Field(default_factory=list)
 
-    p_m: float = 0.1
+    p_m: float = 0.2
     p_c: float = 0.7
 
     def _configure_fitness(self):
@@ -155,4 +155,4 @@ class TSPOrchestrator(GAOrchestratorTemplate):
         most_fit = [indiv.fitness for indiv in population.ind_list]
         most_fit_position = most_fit.index(max(most_fit))
         best_ind = population.ind_list[most_fit_position]
-        return best_ind.decode()
+        return best_ind
