@@ -1,0 +1,36 @@
+
+============  Resumo da Implementação: ================
+- Estratégia utilizada: DE/current-to-best/1/bin
+   - current-to-best: cada indivíduo é movido na direção do melhor da população, 
+   acelerando a convergência
+   - Inclusão do parâmetro λ (lambda) para controlar a intensidade dessa atração
+- Parâmetros utilizados:
+   - F = 0.8 → controla a intensidade da perturbação diferencial (exploração)
+   - CR = 0.5 → probabilidade de herdar genes do vetor mutante
+   - lambda = 0.9 → forte atração em direção ao melhor indivíduo
+- Inicialização uniforme da população no intervalo [−5.12,5.12]
+- Seleção greedy (substitui apenas se o novo indivíduo for melhor)
+- Critério de parada
+  - máximo de 100.000 avaliações
+  - ou convergência f(x)≤ 0.001
+
+
+============  Resultados ================
+Tabela de Resultados:
+   Execução  Convergiu  Gerações  Melhor f(x)
+0         1       True       589     0.000896
+1         2       True       459     0.000880
+2         3       True       643     0.000648
+3         4       True       501     0.000958
+4         5       True       492     0.000923
+5         6       True       621     0.000942
+6         7       True       490     0.000793
+7         8       True       524     0.000930
+8         9       True       724     0.000992
+9        10       True       514     0.000943
+
+--- Estatísticas ---
+Taxa de sucesso: 100.0%
+Melhor valor: 0.000648
+Média: 0.000891
+
