@@ -1,0 +1,46 @@
+
+============  Resumo da Implementação: ================
+- Estratégia utilizada: PSO (Particle Swarm Optimization) gbest (global-best)
+- Cada partícula atualiza velocidade e posição guiada por:
+   - inércia (mantém parte do movimento anterior)
+   - memória individual (pbest): melhor posição já visitada pela partícula
+   - melhor global (gbest): melhor pbest de todo o enxame
+- Parâmetros utilizados:
+   - Inércia adaptativa linear: w_t = w_max - (w_max - w_min) * (total_evals / max_evaluations)
+   - w_max = 0.85 → mais exploração no começo
+   - w_min = 0.50 → mais refino no final
+   - c1 = 1.9 → componente cognitiva (atração ao pbest, mantém diversidade)
+   - c2 = 1.75 → componente social (atração ao gbest, acelera convergência)
+- Inicialização:
+   - Posições uniformes em [−5.12,5.12](10 variáveis)
+   - Velocidades iniciais uniformes em [−1,1]
+- Atualização do enxame:
+   - vi = wt*vi + c1*r1*(pbesti - xi) + c2*r2*(gbesti - xi)
+   - x1 = xi + vi
+   - Tratamento de limites: clipping nos limites
+- Atualização de pbest/gbest:
+   - pbest atualizado somente se houver melhora (greedy)
+   - gbest calculado como o melhor entre todos os pbests
+- Critério de parada:
+   - máximo de 100.000 avaliações, ou
+   - convergência quando gbest_fit ≤ 0.001
+
+
+============  Resultados ================
+Tabela de Resultados:
+   Execução  Convergiu  Gerações  Melhor f(x)
+0         1      False       999     3.979836
+1         2      False       999     1.989918
+2         3       True       846     0.000900
+3         4      False       999     1.989918
+4         5       True       800     0.000677
+5         6      False       999     0.994959
+6         7       True       681     0.000770
+7         8       True       689     0.000611
+8         9      False       999     0.994959
+9        10      False       999     0.994959
+
+--- Estatísticas ---
+Taxa de sucesso: 40.0%
+Melhor valor: 0.000611
+Média: 1.094751
