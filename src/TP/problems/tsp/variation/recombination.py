@@ -25,7 +25,7 @@ class SCX(RecombOperator):
         if len(parents_list) != self.n_parents:
             raise Exception('Only two parents should be used on PMX')
 
-        present_node = 1  # It's our fixed starting point for TSP
+        present_node = 0  # It's our fixed starting point for TSP
         parent_0 = parents_list[0]
         parent_1 = parents_list[1]
         parent_size = len(parent_0.chrm)
@@ -63,9 +63,7 @@ class SCX(RecombOperator):
 
             next_city = min(
                 next_city_candidate_list,
-                key=lambda next: problem_instance.get_weight(
-                    present_node, next
-                ),
+                key=lambda next: problem_instance[present_node, next],
             )
 
             child_chrm.append(next_city)
@@ -83,7 +81,7 @@ class SCX(RecombOperator):
         unvisited: Set,
     ):
 
-        if present_node == 1:
+        if present_node == 0:
             return parent.chrm[0]
         c = adjacency[present_node]
         if c in unvisited:

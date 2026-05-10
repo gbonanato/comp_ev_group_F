@@ -1,8 +1,8 @@
 from typing import List, Optional
 
+import numpy as np
 from pydantic import ConfigDict, Field
 from pydantic.dataclasses import dataclass
-from tsplib95.models import StandardProblem
 
 from TP.core.GA_interface import GAOrchestratorTemplate
 from TP.core.individuals.encoding import PermutationEncoder
@@ -29,8 +29,8 @@ from TP.problems.tsp.variation.recombination import SCX
 
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True), kw_only=True)
-class TSPOrchestrator(GAOrchestratorTemplate):
-    problem_instance: StandardProblem
+class TSPGAOrchestrator(GAOrchestratorTemplate):
+    problem_instance: np.ndarray
     pop_size: int
     n_offsprings: Optional[int]  # Per recombination
 
@@ -63,7 +63,7 @@ class TSPOrchestrator(GAOrchestratorTemplate):
         super().__post_init__()
 
     def generate_individual(self) -> Individual:
-        problem_size = self.problem_instance.dimension
+        problem_size = len(self.problem_instance)
         chrm = self.ind_initializer.generate_chrm(problem_size)
         individual = self.individual_factory.create(chrm)
         return individual

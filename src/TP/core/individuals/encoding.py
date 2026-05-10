@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, List
 
+import numpy as np
+
 
 class Encoder(ABC):
     @abstractmethod
@@ -22,6 +24,10 @@ class PermutationEncoder(Encoder):
 
     @staticmethod
     def decode(chrm: List[int]) -> List[int]:
+        has_float = any(isinstance(x, float) for x in chrm)
+        if has_float:
+            keys = np.array(chrm)
+            chrm = np.argsort(np.argsort(keys))
         return chrm
 
 
