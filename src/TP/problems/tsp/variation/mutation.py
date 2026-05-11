@@ -16,7 +16,7 @@ from TP.core.variation.mutation import MutOperator
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class CrossAwareRSM(MutOperator):  # Reverse Sequence Mutation REFACTOR
     problem_instance: np.ndarray
-    p_random: float = Field(default=0.0, ge=0, le=1)
+    p_random: float = Field(default=0.2, ge=0, le=1)
 
     def execute(
         self,

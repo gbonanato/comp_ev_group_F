@@ -63,6 +63,56 @@ class RouletteStrategy(ParentSelector):
 
 
 @dataclass
+class RankRouletteStrategy(ParentSelector):
+    selection_pressure: float = 1.7  # usually in [1.5, 2.0]
+
+    def calc_selection_prob(self, pop: Population) -> List[float]:
+        n = len(pop.ind_list)
+        if n == 0:
+            raise ValueError('Population is empty')
+
+        # Sort individuals by fitness (ascending)
+        sorted_inds = sorted(
+            enumerate(pop.ind_list),
+            key=lambda x: x[1].fitness,
+        )
+
+        # ranks: worst = 1, best = n
+        ranks = [0] * n
+        for rank, (idx, _) in enumerate(sorted_inds, start=1):
+            ranks[idx] = rank
+
+        s = self.selection_pressure
+
+        # Baker's linear ranking probabilities
+        probs = [
+            (2 - s) / n + (2 * rank * (s - 1)) / (n * (n - 1))
+            for rank in ranks
+        ]
+
+        return probs
+
+    def select_parents(
+        self,
+        num_parents: int,
+        pop: Population,
+    ) -> List[Individual]:
+
+        if pop._select_prob_cache is None:
+            pop._select_prob_cache = self.calc_selection_prob(pop)
+
+        fitness_list = pop._select_prob_cache
+
+        chosen_indices = random.choices(
+            range(len(fitness_list)),
+            weights=fitness_list,
+            k=num_parents,
+        )
+
+        return [pop.ind_list[i] for i in chosen_indices]
+
+
+@dataclass
 class TournamentStrategy(ParentSelector):
     tournament_size: int = 2
 

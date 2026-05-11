@@ -44,10 +44,11 @@ class EAProgressLogger(EALogger):
         mean = sum(ind.fitness for ind in pop.ind_list) / pop.size
 
         self.logger.info(
-            'Generation %d | best=%.5f | mean=%.5f',
+            'Generation %d | best=%.5f | mean=%.5f | Pop Size=%d',
             state.generation,
             best,
             mean,
+            pop.size,
         )
 
     def on_end(self, state: EAState):

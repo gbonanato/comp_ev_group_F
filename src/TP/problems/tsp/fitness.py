@@ -22,7 +22,7 @@ class TSPFitness(FitnessCalculator):
             0,  # Tour start
             chrm[0],
         ]
-        for i in range(len(chrm) - 2):
+        for i in range(len(chrm) - 1):
             total_distance += self.problem_instance[
                 chrm[i],
                 chrm[i + 1],

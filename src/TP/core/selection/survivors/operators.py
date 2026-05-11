@@ -27,8 +27,10 @@ class Generational(SurvivorSelector):
 
 
 @dataclass
+@dataclass
 class ElitismGenerational(SurvivorSelector):
     elite_pop_pct: float = Field(default=0.1, ge=0, le=1)
+    distinct: bool = True
 
     def select_survivors(
         self,
@@ -36,16 +38,38 @@ class ElitismGenerational(SurvivorSelector):
         offsprings: List[Individual],
         n_survivors: int,
     ) -> Population:
+
         elite_pop_size = int(self.elite_pop_pct * n_survivors)
-        elite_parents = heapq.nlargest(
-            elite_pop_size, parents, key=lambda ind: ind.fitness
-        )
-        remaining = n_survivors - elite_pop_size
 
-        sorted_offsprings = heapq.nlargest(
-            remaining, offsprings, key=lambda ind: ind.fitness
+        # Combine parents and offsprings for global elitism
+        candidates = parents + offsprings
+        sorted_candidates = heapq.nlargest(
+            len(candidates), candidates, key=lambda ind: ind.fitness
         )
 
-        next_pop = elite_parents + sorted_offsprings
+        elites = []
+        seen = set()
 
+        for ind in sorted_candidates:
+            if len(elites) >= elite_pop_size:
+                break
+
+            if self.distinct:
+                chrm_key = tuple(ind.chrm)
+                if chrm_key in seen:
+                    continue
+                seen.add(chrm_key)
+
+            elites.append(ind)
+
+        # Fill remaining slots (offsprings prioritized, fitness-based)
+        remaining = n_survivors - len(elites)
+
+        rest_population = heapq.nlargest(
+            remaining,
+            offsprings,
+            key=lambda ind: ind.fitness,
+        )
+
+        next_pop = elites + rest_population
         return Population(next_pop)

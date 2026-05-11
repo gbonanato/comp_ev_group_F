@@ -12,7 +12,7 @@ from TP.core.logging.observer import EAObserver
 from TP.core.logging.progress import EALogger
 from TP.core.selection.parents.operators import (
     ParentSelector,
-    RouletteStrategy,
+    RankRouletteStrategy,
 )
 from TP.core.selection.survivors.operators import (
     ElitismGenerational,
@@ -36,7 +36,9 @@ class TSPGAOrchestrator(GAOrchestratorTemplate):
 
     # defaults
     encoder: PermutationEncoder = Field(default_factory=TSPEncoder)
-    parent_selector: ParentSelector = Field(default_factory=RouletteStrategy)
+    parent_selector: ParentSelector = Field(
+        default_factory=RankRouletteStrategy
+    )
     recombinator: RecombOperator = Field(default_factory=SCX)
     survivor_selector: SurvivorSelector = Field(
         default_factory=ElitismGenerational
@@ -97,7 +99,7 @@ class TSPGAOrchestrator(GAOrchestratorTemplate):
             state.population = population
             state.generation += 1
 
-            if state.generation % 250 == 0:
+            if state.generation % 100 == 0:
                 self._notify_generation_end(state)
 
         self._notify_end(state)
