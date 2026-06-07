@@ -27,7 +27,6 @@ class Generational(SurvivorSelector):
 
 
 @dataclass
-@dataclass
 class ElitismGenerational(SurvivorSelector):
     elite_pop_pct: float = Field(default=0.1, ge=0, le=1)
     distinct: bool = True
