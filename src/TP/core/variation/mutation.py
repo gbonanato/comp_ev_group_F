@@ -1,23 +1,26 @@
 import random
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Any, List, Union
 
 from TP.core.individuals.representation import Individual
+from TP.core.multiobjective.individuals.representation import MOIndividual
 
 
 @dataclass
 class MutOperator(ABC):
+    @staticmethod
     @abstractmethod
-    def execute(Individual) -> Individual:
+    def execute(individual: Union[Individual, MOIndividual]) -> List[Any]:
         pass
 
 
 @dataclass
 class RSM(MutOperator):  # Reverse Sequence Mutation
+    @staticmethod
     def execute(
-        self,
-        individual: Individual,
-    ) -> Individual:
+        individual: Union[Individual, MOIndividual],
+    ) -> List[Any]:
         """
         The Reverse Sequence Mutation (RSM) chooses two randomic positions
         i and j on the chromossome, such that i < j, and inverts the

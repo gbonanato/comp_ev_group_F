@@ -1,11 +1,12 @@
 import random
 from abc import ABC, abstractmethod
-from typing import List
+from typing import Any, List
 
 
 class IndividualInitializer(ABC):
+    @staticmethod
     @abstractmethod
-    def generate_chrm():
+    def generate_chrm(chrm_size: int) -> List[Any]:
         pass
 
 

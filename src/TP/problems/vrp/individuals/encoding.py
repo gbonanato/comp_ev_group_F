@@ -3,7 +3,7 @@ from typing import List
 from TP.core.individuals.encoding import PermutationEncoder
 
 
-class TSPEncoder(PermutationEncoder):
+class VRPEncoder(PermutationEncoder):
     @staticmethod
     def decode(chrm: List[int]) -> List[int]:
         if chrm[0] != 0 and chrm[-1] != 0:

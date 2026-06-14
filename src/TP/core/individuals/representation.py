@@ -18,7 +18,7 @@ class Individual:
         self.encoder.validate(self.chrm)
 
     @property
-    def fitness(self):
+    def fitness(self) -> float:
         if self._fitness is None:
             self._fitness = self.fitness_calculator.calc_fitness(self.chrm)
         return self._fitness

@@ -2,41 +2,41 @@ import random
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from itertools import permutations
-from typing import List, Optional
+from typing import Any, List, Optional, Union
 
-from TP.core.fitness import FitnessCalculator
 from TP.core.individuals.representation import Individual
+from TP.core.multiobjective.individuals.representation import MOIndividual
 
 
 @dataclass
 class RecombOperator(ABC):
     @property
     @abstractmethod
-    def n_offsprings(self):
+    def n_offsprings(self) -> int:
         pass
 
     @property
     @abstractmethod
-    def n_parents(self):
+    def n_parents(self) -> int:
         pass
 
     @abstractmethod
     def recombine(
-        parents_list: List[Individual],
-        fitness_calculator: FitnessCalculator,
-        n_offsprings: Optional[int],
+        self,
+        parents_list: Union[List[Individual], List[MOIndividual]],
+        n_offsprings: Optional[int] = None,
         p_c: float = 0.7,
-    ) -> List[Individual]:
+    ) -> List[List[Any]]:
         pass
 
 
 class PMX(RecombOperator):
     @property
-    def n_offsprings(self):
+    def n_offsprings(self) -> int:
         return 2
 
     @property
-    def n_parents(self):
+    def n_parents(self) -> int:
         return 2
 
     def recombine(

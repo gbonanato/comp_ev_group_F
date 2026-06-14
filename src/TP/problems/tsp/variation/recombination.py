@@ -1,14 +1,20 @@
 import random
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Set, Union
 
 import numpy as np
+from pydantic import ConfigDict
+from pydantic.dataclasses import dataclass
 
 from TP.core.individuals.representation import Individual
+from TP.core.multiobjective.individuals.representation import MOIndividual
 from TP.core.variation.recombination import RecombOperator
 
 
 # From: https://www.sciencedirect.com/org/science/article/pii/S1546221824002674
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class SCX(RecombOperator):
+    dist_mtx: np.ndarray
+
     @property
     def n_offsprings(self):
         return 1
@@ -19,8 +25,8 @@ class SCX(RecombOperator):
 
     def recombine(
         self,
-        parents_list: List[Individual],
-        problem_instance: np.ndarray,
+        parents_list: Union[List[Individual], List[MOIndividual]],
+        n_offsprings=None,
         p_c: float = 0.7,
     ) -> List[List[Any]]:
         if len(parents_list) != self.n_parents:
@@ -65,7 +71,7 @@ class SCX(RecombOperator):
 
                 next_city = min(
                     next_city_candidate_list,
-                    key=lambda next: problem_instance[present_node, next],
+                    key=lambda next: self.dist_mtx[present_node, next],
                 )
 
                 child_chrm.append(next_city)

@@ -3,11 +3,12 @@ import math
 from typing import Dict, List, Tuple
 
 import numpy as np
-from pydantinc.dataclasses import dataclass
+from pydantic.dataclasses import dataclass
 
-from TP.problems.vrp.utils.problem_data import CVRPProblemData
+from TP.problems.vrp.utils.problem_data import VRPProblemData
 
 
+# Attention: PATH has 47 positions. chromosome has 46 (excludes depot)
 @dataclass
 class DPFindCuts:
     """
@@ -24,7 +25,7 @@ class DPFindCuts:
     def split_route(
         self,
         chrm: List[int],
-        problem_data: CVRPProblemData,
+        problem_data: VRPProblemData,
     ):
         last_pos, vec_used, dist_dict, path_builder = self.builds_dp_structure(
             chrm, problem_data
@@ -40,7 +41,7 @@ class DPFindCuts:
     def builds_dp_structure(
         self,
         chrm: List[int],
-        problem_data: CVRPProblemData,
+        problem_data: VRPProblemData,
     ) -> Tuple[
         int,
         int,
@@ -130,10 +131,12 @@ class DPFindCuts:
         List[float]
             list with cumulative distances from node 0
         """
-        prefix_sums = [0] * len(chrm)
-        for i in range(1, len(chrm)):
+        path = chrm.copy()
+        path.insert(0, 0)
+        prefix_sums = [0] * len(path)
+        for i in range(1, len(path)):
             prefix_sums[i] = (
-                prefix_sums[i - 1] + dist_mtx[chrm[i - 1]][chrm[i]]
+                prefix_sums[i - 1] + dist_mtx[path[i - 1]][path[i]]
             )
 
         return prefix_sums
@@ -183,3 +186,6 @@ class DPFindCuts:
             prev_path = dist
 
         return vec_dist_dict
+
+
+# Attention: PATH has 47 positions. chromosome has 46 (excludes depot)

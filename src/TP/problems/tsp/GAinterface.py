@@ -32,7 +32,7 @@ from TP.problems.tsp.variation.recombination import SCX
 class TSPGAOrchestrator(GAOrchestratorTemplate):
     problem_instance: np.ndarray
     pop_size: int
-    n_offsprings: Optional[int]  # Per recombination
+    n_offsprings: Optional[int] = None  # Per recombination
 
     # defaults
     encoder: PermutationEncoder = Field(default_factory=TSPEncoder)

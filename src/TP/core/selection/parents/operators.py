@@ -29,7 +29,7 @@ class ParentSelector(ABC):
         self,
         num_parents: int,
         pop: Population,
-    ) -> List[int]:
+    ) -> List[Individual]:
         pass
 
 
