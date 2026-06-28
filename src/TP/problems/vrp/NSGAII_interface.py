@@ -104,6 +104,18 @@ class VRPNSGAIIOrchestrator(NSGAIIOrchestratorTemplate):
             return True
         return False
 
+    def heuristic_2_opt_population(
+        self,
+        population: MOPopulation,
+        p_ls: float,
+    ):
+        for ind in population:
+            if random.random() < p_ls:
+                ind.chrm = run_2opt(
+                    ind, dist_mtx=self.problem_instance.dist_mtx
+                )
+                ind._fitness = None
+
     def heuristic_2_opt(
         self,
         state: EAState,
@@ -165,6 +177,8 @@ class VRPNSGAIIOrchestrator(NSGAIIOrchestratorTemplate):
             )
             mutated_offsprings = self.mutate(offsprings)
 
+            self.heuristic_2_opt_population(mutated_offsprings, self.p_ls)
+
             selection_population = MOPopulation(
                 ind_list=mutated_offsprings + population.ind_list
             )
@@ -192,7 +206,7 @@ class VRPNSGAIIOrchestrator(NSGAIIOrchestratorTemplate):
             )
 
             state = evaluator.evaluate(
-                population=population,
+                population=state.population,
                 generation=state.generation,
             )
 
